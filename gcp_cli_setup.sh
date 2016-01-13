@@ -1,7 +1,7 @@
 #!/bin/bash
-
+# must manually create new project and set up users, also enable use of GCE, GCS and Big Query APIs (services) using Google Cloud Console
 # ---------------STARTING WITH GOOGLE CLOUD: STEP 0------------
-ACCOUNT=<your GCE user email>
+ACCOUNT=<your GCE user email>                   # required GCP SDK - get it here -- https://cloud.google.com/sdk/
 gcloud auth login $ACCOUNT --brief              # authenticate to GCP from your working directory via Terminal
                                                 # will not launch if $ACCOUNT already has credentials
 
@@ -11,8 +11,8 @@ NUM_AS_SERVERS=1
 ZONE=us-central1-b
 PROJECT=<your GCE project>               # use your project name
 SERVER_INSTANCE_TYPE=n1-standard-8
-USE_PERSISTENT_DISK=0                    # 0 for in-mem only, 1 for persistent disk
-TALEND_IMAGE=windows-image-1       # the OS image you use from GCE Images for Talend
+USE_PERSISTENT_DISK=1                    # 0 for in-mem only, 1 for persistent disk
+TALEND_IMAGE="https://www.googleapis.com/compute/v1/projects/windows-cloud/global/images/windows-server-2012-r2-dc-v20151006"      # the OS image you use from GCE Images for Talend
 
 SERVER_INSTANCES=`for i in $(seq 1 $NUM_AS_SERVERS); do echo as-server-$i; done`
 SERVER_DISKS=`for i in $(seq 1 $NUM_AS_SERVERS); do echo as-persistent-disk-$i; done`
@@ -22,8 +22,8 @@ GCLOUD_ARGS="--zone $ZONE --project $PROJECT"
 # 2. CREATE SERVER GCE VMS & DISKS
 echo "Creating GCE server instances, please wait..."
 gcloud compute instances create $GCLOUD_ARGS $SERVER_INSTANCES \
-    --machine-type $SERVER_INSTANCE_TYPE --tags "http-server" \
-    --image $AEROSPIKE_IMAGE --image-project $PROJECT
+    --machine-type $SERVER_INSTANCE_TYPE --tags "etl-job-server" \
+    --image $TALEND_IMAGE --image-project $PROJECT
 
 # SETUP PERSISTENT DISKS (optional)
 if [ $USE_PERSISTENT_DISK -eq 1 ]
@@ -65,20 +65,24 @@ done
 
 # 5. START Talend services on server-1
 # - Find the public IP of as-server-1, open http://<public ip of server-1>:8081, then http://<internal IP of server-1>:3000
-/bin/echo "Starting Aerospike management console on as-server-1 (external: $server1_external_ip, internal: $server1_ip)"
+/bin/echo "Starting Talend console on as-server-1 (external: $server1_external_ip, internal: $server1_ip)"
 gcloud compute ssh $GCLOUD_ARGS as-server-1 --ssh-flag="-t" \
     --command "sudo service amc start" --ssh-flag="-o LogLevel=quiet"
-/bin/echo "AMC is available at: http://$server1_external_ip:8081"
+/bin/echo "Talend job server is available at: http://$server1_external_ip:8081"
 /bin/echo "    use cluster seed node: $server1_ip"
 
 # ------------------- Setup GCS buckets: STEPS 6a-c -----------------------
-# 6a. SET LOAD PARAMETERS
-# -- do work
-# -- set permissions
+# 6. Work with GCS
+# -- list existing buckets
+gsutil ls
+# -- create bucket(s)
+gsutil mb gs://<bucketname1> gs://<bucketname2>
+
 
 
 # ------------------- Setup BigQuery: STEPS 7-10 -----------------------
-# 7. STOP THE LOAD
-# -- do work
-# -- set permissions
+# 7. Work with BigQuery
+# -- ls objects
+bq ls [<project_id:><dataset_id>]
+
 
