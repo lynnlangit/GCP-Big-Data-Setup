@@ -1,12 +1,11 @@
 #!/bin/bash
-# must manually create new project and set up users, also enable use of GCE, GCS and Big Query APIs (services) using Google Cloud Console
+
 # ---------------STARTING WITH GOOGLE CLOUD: STEP 0------------
 ACCOUNT=<your GCE user email>                   # required GCP SDK - get it here -- https://cloud.google.com/sdk/
 gcloud auth login $ACCOUNT --brief              # authenticate to GCP from your working directory via Terminal
                                                 # will not launch if $ACCOUNT already has credentials
-
 # ------------------- SETUP GCE for Talend ETL: STEPS 1-5 -----------------------
-# 1a. SET VARIABLES
+# 1. SET VARIABLES
 NUM_AS_SERVERS=1                         # staring with only one job server, using a variable makes adding more servers simpler
 ZONE=us-central1-b                       # starting with US zone, could locate in other regions as needed
 PROJECT=<your GCE project>               # use your project name
@@ -36,7 +35,7 @@ then
     done
 fi
 
-# 3a. UPDATE/UPLOAD THE TALEND SETUP & CONFIG FILES
+# 3. UPDATE/UPLOAD THE TALEND SETUP & CONFIG FILES
 if [ $USE_PERSISTENT_DISK -eq 0 ]
 then
     CONFIG_FILE=inmem_only_aerospike.conf
@@ -54,22 +53,21 @@ for i in $(seq 1 $NUM_AS_SERVERS); do
 done
 /bin/echo
 
-# 4b. BOOT SERVERS TO CREATE CLUSTER  
-/bin/echo "Starting aerospike daemons..."
+# 4. START SERVICES  
+/bin/echo "Starting talend daemons..."
 for i in $(seq 1 $NUM_AS_SERVERS); do
   /bin/echo -n "  server-$i"
   gcloud compute ssh $GCLOUD_ARGS as-server-$i --ssh-flag="-o LogLevel=quiet" \
-      --command "sudo /usr/bin/asd --config-file /etc/aerospike/aerospike.conf"
+      --command "sudo /usr/bin/<talend-daemon> --config-file /etc/<talend>/<talend>.conf"
 done
 /bin/echo
 
 # 5. START Talend services on server-1
-# - Find the public IP of as-server-1, open http://<public ip of server-1>:8081, then http://<internal IP of server-1>:3000
+# - Find the public IP of as-server-1, open http://<public ip of server-1>
 /bin/echo "Starting Talend console on as-server-1 (external: $server1_external_ip, internal: $server1_ip)"
 gcloud compute ssh $GCLOUD_ARGS as-server-1 --ssh-flag="-t" \
-    --command "sudo service amc start" --ssh-flag="-o LogLevel=quiet"
+    --command "sudo service Talend start" --ssh-flag="-o LogLevel=quiet"
 /bin/echo "Talend job server is available at: http://$server1_external_ip:8081"
-/bin/echo "    use cluster seed node: $server1_ip"
 
 # ------------------- Setup GCS buckets: STEPS 6a-c -----------------------
 # 6. Work with GCS
@@ -77,8 +75,6 @@ gcloud compute ssh $GCLOUD_ARGS as-server-1 --ssh-flag="-t" \
 gsutil ls
 # -- create bucket(s)
 gsutil mb gs://<bucketname1> gs://<bucketname2>
-
-
 
 # ------------------- Setup BigQuery: STEPS 7-10 -----------------------
 # 7. Work with BigQuery
