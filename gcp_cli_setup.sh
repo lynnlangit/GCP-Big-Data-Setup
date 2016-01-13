@@ -5,12 +5,12 @@ ACCOUNT=<your GCE user email>                   # required GCP SDK - get it here
 gcloud auth login $ACCOUNT --brief              # authenticate to GCP from your working directory via Terminal
                                                 # will not launch if $ACCOUNT already has credentials
 
-# ------------------- SETUP: STEPS 1-5 -----------------------
+# ------------------- SETUP GCE for Talend ETL: STEPS 1-5 -----------------------
 # 1a. SET VARIABLES
-NUM_AS_SERVERS=1
-ZONE=us-central1-b
+NUM_AS_SERVERS=1                         # staring with only one job server, using a variable makes adding more servers simpler
+ZONE=us-central1-b                       # starting with US zone, could locate in other regions as needed
 PROJECT=<your GCE project>               # use your project name
-SERVER_INSTANCE_TYPE=n1-standard-8
+SERVER_INSTANCE_TYPE=n1-standard-8       # starting with standard size, can adjust per load needs
 USE_PERSISTENT_DISK=1                    # 0 for in-mem only, 1 for persistent disk
 TALEND_IMAGE="https://www.googleapis.com/compute/v1/projects/windows-cloud/global/images/windows-server-2012-r2-dc-v20151006"      # the OS image you use from GCE Images for Talend
 
@@ -73,7 +73,7 @@ gcloud compute ssh $GCLOUD_ARGS as-server-1 --ssh-flag="-t" \
 
 # ------------------- Setup GCS buckets: STEPS 6a-c -----------------------
 # 6. Work with GCS
-# -- list existing buckets
+# -- list existing buckets - folders current (delta processing tables), history and snapshot (machine generated w/timestamp - high vol)
 gsutil ls
 # -- create bucket(s)
 gsutil mb gs://<bucketname1> gs://<bucketname2>
