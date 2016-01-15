@@ -16,3 +16,5 @@ gcloud deployment-manager resources list --deployment dev-env-deployment
 
 # 3. DELETE IT
 gcloud deployment-manager deployments delete dev-env-deployment
+
+#--docs are here -- https://cloud.google.com/sdk/gcloud/reference/deployment-manager/deployments/
