@@ -45,15 +45,30 @@ gcloud compute ssh $GCLOUD_ARGS as-server-1 --ssh-flag="-t" \
     --command "sudo service Talend start" --ssh-flag="-o LogLevel=quiet"
 /bin/echo "Talend job server is available at: http://$server1_external_ip:8081"
 
-# ------------------- Setup GCS buckets: STEP 5 -----------------------
-# 5. Work with GCS
-# -- list existing buckets - folders current (delta processing tables), history and snapshot (machine generated w/timestamp - high vol)
+# ------------------- Setup Network Objects: STEP 5 -----------------------
+# -- create your network, use CIDR IPv4 notation
+gcloud compute networks create <NAME> --range<RANGE> 
+
+# -- create your routes 
+# -- docs for flags -- https://cloud.google.com/sdk/gcloud/reference/compute/routes/create
+gcloud compute routes create <NAME> ...other flags
+
+# -- create firewall rules 
+# -- documentation for flags -- https://cloud.google.com/sdk/gcloud/reference/compute/firewall-rules/create
+gcloud compute firewall-rules create <NAME> --allow <PROTOCOL:PORT, ...> 
+
+# -- create your network address (for Talend)
+# -- documentation for flags -- https://cloud.google.com/sdk/gcloud/reference/compute/addresses/create
+gcloud compute addresses create <NAME> ...other flags
+
+# ------------------- Setup GCS buckets: STEP 6 -----------------------
+# -- list existing buckets 
+# -- folders current (delta processing tables), history and snapshot (machine generated w/timestamp - high vol)
 gsutil ls
 # -- create bucket(s)
-gsutil mb gs://<bucketname1> gs://<bucketname2>
+gsutil mb gs://<bucketname1> gs://<bucketname2>...
 
 # ------------------- Setup BigQuery: STEP 6 -----------------------
-# 6. Work with BigQuery
 # -- ls objects
 bq ls [<project_id:><dataset_id>]
 
